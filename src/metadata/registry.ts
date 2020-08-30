@@ -23,7 +23,7 @@ export class MetadataRegistry {
   static getMessagePayload(target: Function): SchemaObjectMetadata {
     const message = this.getMessage(target);
     message.payload = message.payload || { type: 'object', properties: {} };
-    message.payload.properties = {};
+    message.payload.properties = message.payload.properties || {};
     return message.payload;
   }
 

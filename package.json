@@ -1,6 +1,6 @@
 {
   "name": "asyncapi-decorators",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "AsyncAPI decorators",
   "main": "lib/index.js",
   "type": "lib/index.d.ts",
@@ -40,8 +40,8 @@
     }
   },
   "release": {
-    "npmPublish": false,
-    "pkgRoot": "dist/$npm_package_name",
+    "npmPublish": true,
+    "pkgRoot": "lib/$npm_package_name",
     "verifyConditions": [
       "@semantic-release/changelog",
       "@semantic-release/git",
