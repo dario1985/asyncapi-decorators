@@ -6,7 +6,7 @@ export function ApiProperty(schema?: SchemaObjectMetadata): PropertyDecorator
 export function ApiProperty(type?: string): PropertyDecorator
 export function ApiProperty(schemaOrType: SchemaObjectMetadata | string = ''): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
-    const type = Reflect.getMetadata('design:type', target, propertyKey)?.name;
+    const type = String(Reflect.getMetadata('design:type', target, propertyKey)?.name).toLowerCase();
     if (schemaOrType) {
       const schema = typeof schemaOrType === 'string' ? { type: schemaOrType } : schemaOrType;
       schema.type = schema.type || type;
