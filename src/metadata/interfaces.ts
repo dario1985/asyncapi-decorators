@@ -3,8 +3,11 @@ export interface SchemaRef {
 }
 
 export interface SchemaObjectMetadata {
-  type: string;
+  type?: string;
   title?: string;
+  description?: string;
+  format?: string;
+  default?: any;
   enum?: string[];
   properties?: Record<string | symbol, SchemaObjectMetadata | SchemaRef>;
   required?: string[];
@@ -37,6 +40,12 @@ export interface SchemaObjectMetadata {
   oneOf?: Array<SchemaObjectMetadata | SchemaRef>;
   anyOf?: Array<SchemaObjectMetadata | SchemaRef>;
   not?: SchemaObjectMetadata | SchemaRef;
+  xml?: {
+    name?: string;
+    attribute?: boolean;
+    namespace?: string;
+    prefix?: string;
+  };
 }
 
 export interface MessageMetadata {
