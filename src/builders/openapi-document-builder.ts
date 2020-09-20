@@ -10,6 +10,7 @@ import { generateSchemaRef } from './common';
 
 export class OpenApiDocumentBuilder implements DocumentBuilder {
   private readonly metadata = MetadataRegistry.getMetadata();
+  private readonly basePath = '/';
   private readonly document = {
     openapi: '3.0.3',
     info: {
@@ -20,6 +21,7 @@ export class OpenApiDocumentBuilder implements DocumentBuilder {
     tags: [],
     servers: [] as { url: string, description?: string, variables?: Record<string, any> }[],
     security: [] as Security[],
+    paths: {} as Record<string, any>,
     components: {} as Record<string, any>,
   };
 
@@ -96,40 +98,34 @@ export class OpenApiDocumentBuilder implements DocumentBuilder {
 
   private buildPaths() {
     const buildSchemaRef = generateSchemaRef('#/components/schemas');
-    const buildOpenApiOperation = (op: ChannelOperationMetadata | Function | Function[]) => {
-      if (!(op as ChannelOperationMetadata)?.bindings?.http?.type) {
-        return null;
+    const buildOpenApiContent = (op: ChannelOperationMetadata | Function | Function[]) => ({
+      description: '',
+      content: {
+        [this.defaultMediaType || '*/*']: {
+          schema: buildSchemaRef((op as ChannelOperationMetadata).message || op) || {},
+        }
       }
-      return buildSchemaRef((op as ChannelOperationMetadata).message || op) || {};
-    }
+    });
 
     const httpChannels = Object.keys(this.metadata.channels)
-      .map((name: string): { path: string, method: HttpMethod, operation: any } | void => {
-        const channel = this.metadata.channels[name];
+      .map((channelName: string): { path: string, method: HttpMethod, operation: any } | void => {
+        const channel = this.metadata.channels[channelName];
+        const [path] = channelName.split('#');
         const method = (channel.publish as ChannelOperationMetadata)?.bindings?.http?.method;
 
         if (method) {
           const requestBody = ['GET', 'DELETE', 'TRACE', 'OPTIONS', 'HEAD'].includes(method)
             ? undefined
-            : {
-              content: {
-                [this.defaultMediaType || '*/*']: { schema: buildOpenApiOperation(channel.publish!) },
-              }
-            };
+            : buildOpenApiContent(channel.publish!);
 
           return {
-            path: name,
+            path: path.startsWith('/') ? path : `${this.basePath}${path}`,
             method,
             operation: {
               summary: channel.description,
               ...(requestBody && { requestBody }),
               responses: {
-                default: {
-                  description: '',
-                  content: {
-                    [this.defaultMediaType || '*/*']: { schema: buildOpenApiOperation(channel.subscribe!) },
-                  }
-                }
+                default: buildOpenApiContent(channel.subscribe!)
               }
             }
           }
@@ -167,6 +163,17 @@ export class OpenApiDocumentBuilder implements DocumentBuilder {
         schema.properties = Object.entries(schema.properties)
           .map(([name, propertySchema]): [string, JSONSchema4] => [name, cleanSchema(propertySchema)])
           .reduce((properties, [k, v]) => Object.assign(properties, { [k]: v }), {} as JSONSchema4);
+      }
+
+      if (schema.examples && Array.isArray(schema.examples)) {
+        if (schema.examples.length === 1) {
+          (schema as any).example = schema.examples[0];
+          delete schema.examples;
+        } else {
+          (schema as any).examples = schema.examples.reduce((examples, example, index) => {
+            Object.assign(examples, { [`#${index}`]: example })
+          }, {} as Record<string, any>)
+        }
       }
 
       return schema;

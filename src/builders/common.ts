@@ -2,7 +2,11 @@ export const isObject = (x: any): x is object => x !== null && typeof x === 'obj
 
 export const generateSchemaRef = (componentPathPrefix: string) => (classOrRef: Function | Function[]): object => {
   if (Array.isArray(classOrRef)) {
-    return { oneOf: classOrRef.map(generateSchemaRef(componentPathPrefix)) };
+    if (classOrRef.length > 1) {
+      return { oneOf: classOrRef.map(generateSchemaRef(componentPathPrefix)) };
+    } else {
+      classOrRef = classOrRef[0];
+    }
   }
 
   const name = (typeof classOrRef === 'function') &&

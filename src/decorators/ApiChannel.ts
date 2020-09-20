@@ -25,7 +25,7 @@ export function ApiHttpChannel(
   response: Function | Function[],
   schema: ChannelMetadata = {},
 ) {
-  return ApiChannel(path, {
+  return ApiChannel(`${path}#${method}`, {
     publish: { message: request, bindings: { http: { type: 'request', method } } },
     subscribe: { message: response, bindings: { http: { type: 'response' } } },
     ...schema,
