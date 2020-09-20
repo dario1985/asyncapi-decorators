@@ -9,6 +9,8 @@ const getJsonSchemaType = (target: object, propertyKey: string | symbol): { type
     return { type: 'null' };
   } else if (designTypeName === 'BigInt') {
     return { type: 'integer' };
+  } else if (designTypeName === 'Buffer') {
+    return { type: 'string', format: 'binary' };
   } else if (designTypeName === 'Date') {
     return { type: 'string', format: 'date' };
   } else {
@@ -16,7 +18,7 @@ const getJsonSchemaType = (target: object, propertyKey: string | symbol): { type
     if (['array', 'boolean', 'number', 'string', 'object', 'null'].includes(lowcaseType)) {
       return { type: lowcaseType, ...(lowcaseType === 'array' ? { items: {} } : {}) };
     } else {
-      return { type: 'object', name: designTypeName };
+      return { $ref: `#/components/schemas/${designTypeName}` } as any;
     }
   }
 }
