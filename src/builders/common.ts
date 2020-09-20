@@ -1,5 +1,8 @@
 export const isObject = (x: any): x is object => x !== null && typeof x === 'object' && !Array.isArray(x);
 
+export const objectMap = (fn: Function, obj: object) => Object.entries(obj)
+  .reduce((mapped, [key, val]) => Object.assign(mapped, { [key]: fn(val) }), {});
+
 export const generateSchemaRef = (componentPathPrefix: string) => (classOrRef: Function | Function[]): object => {
   if (Array.isArray(classOrRef)) {
     if (classOrRef.length > 1) {

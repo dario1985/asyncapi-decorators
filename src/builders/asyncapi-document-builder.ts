@@ -1,6 +1,6 @@
 import yaml from 'yaml';
 import { MetadataRegistry } from '../metadata/registry';
-import { ChannelMetadata, ChannelOperationMetadata } from '../metadata/interfaces';
+import { ChannelMetadata, ChannelOperationMetadata, MessageMetadata, SchemaObjectMetadata } from '../metadata/interfaces';
 import { generateSchemaRef, isObject } from './common';
 
 export class AsyncAPIDocumentBuilder {
@@ -36,6 +36,20 @@ export class AsyncAPIDocumentBuilder {
     return this;
   }
 
+  private buildComponents() {
+    const messages: Record<string, MessageMetadata> = {};
+    const schemas: Record<string, SchemaObjectMetadata> = {};
+    Object.keys(this.metadata.messages).forEach(name => {
+      const message = { ...this.metadata.messages[name] };
+      if (message.payload) {
+        schemas[name] = message.payload;
+        message.payload = { $ref: `#/components/schemas/${name}` } as any;
+      }
+      messages[name] = message;
+    });
+    return { messages, schemas };
+  }
+
   private normaliseChannels(): ChannelMetadata {
     const generateMessageRef = generateSchemaRef('#/components/messages');
     const normaliseChannelOperation = (op: any): ChannelOperationMetadata => {
@@ -66,9 +80,7 @@ export class AsyncAPIDocumentBuilder {
       servers: this.servers,
       ...this.data,
       channels: this.normaliseChannels(),
-      components: {
-        messages: this.metadata.messages,
-      }
+      components: this.buildComponents(),
     }
   }
 

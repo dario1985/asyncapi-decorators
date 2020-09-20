@@ -143,7 +143,7 @@ export class OpenApiDocumentBuilder implements DocumentBuilder {
 
   private buildSchemas() {
     const isAnyArray = (schema: JSONSchema4): boolean => schema.type === 'array' && (
-      !schema.items || !schema.items?.length || (schema.items as JSONSchema4)?.type === 'any'
+      !schema.items || !schema.items?.length || !Object.keys(schema.items).length
     );
 
     const cleanSchema = <T extends JSONSchema4>(schema: T): JSONSchema4 => {
@@ -155,8 +155,6 @@ export class OpenApiDocumentBuilder implements DocumentBuilder {
           schema.items = { $ref: `#/components/schemas/${schema.name}` };
         }
         delete schema.name;
-      } else if (isAnyArray(schema)) {
-        schema.items = {};
       }
 
       if (schema.properties) {

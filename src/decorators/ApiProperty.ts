@@ -14,7 +14,7 @@ const getJsonSchemaType = (target: object, propertyKey: string | symbol): { type
   } else {
     const lowcaseType = designTypeName.toLowerCase();
     if (['array', 'boolean', 'number', 'string', 'object', 'null'].includes(lowcaseType)) {
-      return { type: lowcaseType, ...(lowcaseType === 'array' ? { items: { type: 'any' } } : {}) };
+      return { type: lowcaseType, ...(lowcaseType === 'array' ? { items: {} } : {}) };
     } else {
       return { type: 'object', name: designTypeName };
     }
