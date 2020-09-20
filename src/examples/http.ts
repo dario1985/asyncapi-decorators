@@ -1,7 +1,19 @@
-import { ApiChannel } from '../decorators/ApiChannel';
+import { ApiChannel, ApiHttpChannel } from '../decorators/ApiChannel';
 import { ApiMessage } from '../decorators/ApiMessage';
-import { DocumentationBuilder } from '../metadata/documentation-builder';
+import { AsyncAPIDocumentBuilder } from '../builders/asyncapi-document-builder';
 import { ApiProperty } from '../decorators/ApiProperty';
+import { OpenApiDocumentBuilder } from '../builders/openapi-document-builder';
+
+class EmbeddedDto {
+  @ApiProperty()
+  externalId?: string;
+
+  @ApiProperty()
+  items?: string[];
+
+  @ApiProperty()
+  createdAt?: Date;
+}
 
 class BaseRequestDto {
   @ApiProperty()
@@ -31,6 +43,12 @@ class RequestDto extends BaseRequestDto {
     format: 'binary'
   })
   query?: string;
+
+  @ApiProperty()
+  hasBody?: boolean;
+
+  @ApiProperty()
+  object?: EmbeddedDto;
 }
 
 @ApiMessage()
@@ -39,13 +57,8 @@ class ResponseDto {
   message?: string;
 }
 
-@ApiChannel('/', {
-  description: 'Home',
-  subscribe: [ResponseDto],
-  publish: {
-    bindings: { http: { type: 'request', method: 'GET' } },
-    message: () => RequestDto
-  },
+@ApiHttpChannel('/', 'GET', RequestDto, [ResponseDto], {
+  description: 'Home'
 })
 @ApiChannel('/', {
   description: 'Create',
@@ -58,11 +71,20 @@ class ResponseDto {
 // @ts-ignore
 class Handler { }
 
-const builder = new DocumentationBuilder()
+const asyncApiBuilder = new AsyncAPIDocumentBuilder()
   .setTitle('Awesome API')
   .setDescription('Awesome api description')
   .setVersion('v1.0.0')
   .addServer('production', 'http://localhost:3000', 'http')
   .setDefaultContentType('application/json')
 
-console.log(builder.toYAML())
+console.log('\n'.padStart(32, '-') + ' AsyncAPI document:\n\n' + asyncApiBuilder.toYAML())
+
+const openApiBuilder = new OpenApiDocumentBuilder()
+  .setTitle('Awesome API')
+  .setDescription('Awesome api description')
+  .setVersion('v1.0.0')
+  .addServer('http://localhost:3000', 'Local server')
+  .setDefaultContentType('application/json')
+
+console.log('\n'.padStart(32, '-') + ' OpenAPI document:\n\n' + openApiBuilder.toYAML())

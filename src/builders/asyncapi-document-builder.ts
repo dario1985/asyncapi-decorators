@@ -1,30 +1,15 @@
 import yaml from 'yaml';
-import { MetadataRegistry } from './registry';
-import { ChannelMetadata, ChannelOperationMetadata } from './interfaces';
+import { MetadataRegistry } from '../metadata/registry';
+import { ChannelMetadata, ChannelOperationMetadata } from '../metadata/interfaces';
+import { generateSchemaRef, isObject } from './common';
 
-const isObject = (x: any): x is object => x !== null && typeof x === 'object' && !Array.isArray(x);
-
-const generateMessageRef = (classOrRef: Function | Function[]): object => {
-  if (Array.isArray(classOrRef)) {
-    return { oneOf: classOrRef.map(generateMessageRef) };
-  }
-
-  const name = (typeof classOrRef === 'function') &&
-    (classOrRef.hasOwnProperty('prototype') ? classOrRef.name : classOrRef()?.name);
-
-  if (!name) {
-    throw new TypeError('Invalid Message Class reference.')
-  }
-  return { $ref: `#/components/messages/${name}` }
-}
-
-export class DocumentationBuilder {
+export class AsyncAPIDocumentBuilder {
   private servers: Record<string, Record<string, any>> = {};
   private info: Record<string, string> = {};
   private metadata = MetadataRegistry.getMetadata();
   private data: Record<string, string> = {};
 
-  setTitle(title: string) {
+  setTitle(title: string): this {
     this.info.title = title;
     return this;
   }
@@ -34,24 +19,25 @@ export class DocumentationBuilder {
     return this;
   }
 
-  setVersion(version: string) {
+  setVersion(version: string): this {
     this.info.version = version;
     return this;
   }
 
-  addServer(name: string, url: string, protocol: string, options: Record<string, any> = {}) {
+  addServer(name: string, url: string, protocol: string, options: Record<string, any> = {}): this {
     this.servers[name] = {
       url, protocol, ...options,
     };
     return this;
   }
 
-  setDefaultContentType(type: string) {
+  setDefaultContentType(type: string): this {
     this.data.defaultContentType = type;
     return this;
   }
 
   private normaliseChannels(): ChannelMetadata {
+    const generateMessageRef = generateSchemaRef('#/components/messages');
     const normaliseChannelOperation = (op: any): ChannelOperationMetadata => {
       const message = generateMessageRef((op as ChannelOperationMetadata).message || op);
       return {
